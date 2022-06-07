@@ -56,11 +56,12 @@ def draw_objects(draw, objs, labels):
 def main():
   parser = argparse.ArgumentParser(
       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-  parser.add_argument('-m', '--model', required=True,
-                      help='File path of .tflite file')
+  parser.add_argument('-m', '--model', help='File path of .tflite file',
+                      default='test_data/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite')
   parser.add_argument('-i', '--input', required=True,
                       help='File path of image to process')
-  parser.add_argument('-l', '--labels', help='File path of labels file')
+  parser.add_argument('-l', '--labels', help='File path of labels file',
+                      default='test_data/coco_labels.txt')
   parser.add_argument('-t', '--threshold', type=float, default=0.4,
                       help='Score threshold for detected objects')
   parser.add_argument('-o', '--output',
