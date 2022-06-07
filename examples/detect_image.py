@@ -59,13 +59,15 @@ def main():
   parser.add_argument('-m', '--model', help='File path of .tflite file',
                       default='test_data/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite')
   parser.add_argument('-i', '--input', required=True,
-                      help='File path of image to process')
+                      help='File path of image to process',
+                      default="coral_src1.jpg")
   parser.add_argument('-l', '--labels', help='File path of labels file',
                       default='test_data/coco_labels.txt')
   parser.add_argument('-t', '--threshold', type=float, default=0.4,
                       help='Score threshold for detected objects')
   parser.add_argument('-o', '--output',
-                      help='File path for the result image with annotations')
+                      help='File path for the result image with annotations',
+                      default="output.jpg")
   parser.add_argument('-c', '--count', type=int, default=5,
                       help='Number of times to run inference')
   args = parser.parse_args()
