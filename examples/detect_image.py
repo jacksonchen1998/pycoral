@@ -32,6 +32,7 @@ python3 examples/detect_image.py \
 
 import argparse
 import time
+import cv2
 
 from PIL import Image
 from PIL import ImageDraw
@@ -58,7 +59,7 @@ def main():
       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument('-m', '--model', help='File path of .tflite file',
                       default='test_data/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite')
-  parser.add_argument('-i', '--input', required=True,
+  parser.add_argument('-i', '--input',
                       help='File path of image to process',
                       default="coral_src1.jpg")
   parser.add_argument('-l', '--labels', help='File path of labels file',
@@ -68,44 +69,59 @@ def main():
   parser.add_argument('-o', '--output',
                       help='File path for the result image with annotations',
                       default="output.jpg")
-  parser.add_argument('-c', '--count', type=int, default=5,
+  parser.add_argument('-c', '--count', type=int, default=1,
                       help='Number of times to run inference')
   args = parser.parse_args()
+
+  file_fps = open("p2p_detect_fps.txt", "w")
+  file_detail = open("p2p_detect.txt", "w")
 
   labels = read_label_file(args.labels) if args.labels else {}
   interpreter = make_interpreter(args.model)
   interpreter.allocate_tensors()
 
-  image = Image.open(args.input)
-  _, scale = common.set_resized_input(
+  cam_port = 1
+  cam = cv2.VideoCapture(cam_port)
+
+  while True:
+    result, image = cam.read()
+
+    if result:
+      cv2.imwrite("coral_src1.jpg", "w")
+    else:
+      print("No image")
+
+    image = Image.open("coral_src1.jpg")
+    _, scale = common.set_resized_input(
       interpreter, image.size, lambda size: image.resize(size, Image.ANTIALIAS))
 
-  print('----INFERENCE TIME----')
-  print('Note: The first inference is slow because it includes',
-        'loading the model into Edge TPU memory.')
-  for _ in range(args.count):
-    start = time.perf_counter()
-    interpreter.invoke()
-    inference_time = time.perf_counter() - start
-    objs = detect.get_objects(interpreter, args.threshold, scale)
-    print('%.2f ms' % (inference_time * 1000))
+    #print('----INFERENCE TIME----')
+    #print('Note: The first inference is slow because it includes',
+    #'loading the model into Edge TPU memory.')
+    for _ in range(args.count):
+      start = time.perf_counter()
+      interpreter.invoke()
+      inference_time = time.perf_counter() - start
+      objs = detect.get_objects(interpreter, args.threshold, scale)
+      file_fps.write(str('%.2f' % (inference_time * 1000)))
+      file_fps.flush()
 
-  print('-------RESULTS--------')
-  if not objs:
-    print('No objects detected')
+    #print('-------RESULTS--------')
+    if not objs:
+      print('No objects detected')
 
-  for obj in objs:
-    print(labels.get(obj.id, obj.id))
-    print('  id:    ', obj.id)
-    print('  score: ', obj.score)
-    print('  bbox:  ', obj.bbox)
+    for obj in objs:
+      file_detail.write(str(labels.get(obj.id, obj.id)) + "\n")
+      file_detail.write(str(obj.id) + "\n")
+      file_detail.write(str(obj.score) + "\n")
+      #print('  bbox:  ', obj.bbox)
+      file_detail.flush()
 
-  if args.output:
-    image = image.convert('RGB')
-    draw_objects(ImageDraw.Draw(image), objs, labels)
-    image.save(args.output)
-    image.show()
-
+    if args.output:
+      image = image.convert('RGB')
+      draw_objects(ImageDraw.Draw(image), objs, labels)
+      image.save(args.output)
+      image.show()
 
 if __name__ == '__main__':
   main()
