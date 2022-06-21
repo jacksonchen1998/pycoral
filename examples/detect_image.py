@@ -103,7 +103,7 @@ def main():
       interpreter.invoke()
       inference_time = time.perf_counter() - start
       objs = detect.get_objects(interpreter, args.threshold, scale)
-      file_fps.write(str('%.2f' % (inference_time * 1000)))
+      #file_fps.write(str('%.2f' % (inference_time * 1000)))
       file_fps.flush()
 
     #print('-------RESULTS--------')
